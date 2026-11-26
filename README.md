@@ -1,6 +1,6 @@
 # Con el salario básico de $500, ¿nos reemplazarán las máquinas?
 
-Este repositorio tiene los datos y el código de R del artículo de El Quantificador «Con el salario básico de $500, ¿nos reemplazarán las máquinas?», de Daniel Sánchez. El código calcula las cifras de la Tabla 1, dibuja los cuatro gráficos y produce los números que el texto cita.
+Este repositorio tiene los datos y el código de R del artículo de El Quantificador «Con el salario básico de $500, ¿nos reemplazarán las máquinas?», de Daniel Sánchez. El código calcula las cifras de la Tabla 1, dibuja los cinco gráficos y produce los números que el texto cita.
 
 ## La pregunta
 
@@ -44,7 +44,7 @@ Carpetas:
 scripts/           un script por cálculo; 00_common.R tiene el estilo de los gráficos
 data/raw/<fuente>/ datos de origen, sin modificar
 outputs/tables/    tablas en CSV, con punto decimal
-outputs/figures/   los cuatro gráficos, en PNG y SVG
+outputs/figures/   los cinco gráficos, en PNG y SVG
 ```
 
 ## Datos
@@ -107,7 +107,7 @@ Un índice de 114 significa que el valor es 14% mayor que en 2017. Con el SBU: 1
 - `indice_vab_sbu_2017_2025.csv`: los tres índices del Gráfico 1, con 2017 = 100.
 - `grafico_1_vab_sbu.png` y `grafico_1_vab_sbu.svg`.
 
-### 04_precio_capital.R: Gráfico 3
+### 04_precio_capital.R: Gráfico 4
 
 Los índices de precio de Estados Unidos son mensuales. Primero se promedian por año y después se divide cada año para 2007:
 
@@ -119,7 +119,7 @@ Con las computadoras: el promedio de 2026 (enero a octubre) es 101,48 y el de 20
 
 Se usan precios de Estados Unidos porque Ecuador está dolarizado y compra en el exterior buena parte de sus equipos. Los índices de computadoras y software ya se ajustan por calidad: miden cuánto cuesta la misma capacidad.
 
-Escribe `precio_capital_vs_sbu.csv` (`serie`, `anio`, `valor`, `indice`), `grafico_3_sbu_precio_capital.png` y `grafico_3_sbu_precio_capital.svg`.
+Escribe `precio_capital_vs_sbu.csv` (`serie`, `anio`, `valor`, `indice`), `grafico_4_sbu_precio_capital.png` y `grafico_4_sbu_precio_capital.svg`.
 
 ### 05_maquinaria_nacional.R: maquinaria producida en el país
 
@@ -174,7 +174,7 @@ Para cada grupo calcula qué porcentaje de todas las personas que trabajan repre
 
 Escribe `quien_gana_basico_resumen.csv` (`grupo`, `empleo`, `porcentaje`, `porcentaje_grupo`, `parte_del_grupo`).
 
-### 13_basico_por_rama.R: Gráfico 4
+### 13_basico_por_rama.R: Gráficos 3 y 5
 
 Usa las mismas personas y los mismos pesos del script 12, y la rama de actividad (`rama1`, secciones A a U de la CIIU). Calcula, por sección:
 
@@ -184,23 +184,25 @@ gana_menos_de_482 = 100 × suma de pesos con ingreso < 482 / suma de pesos de la
 
 En agricultura y pesca, 83,7% de quienes trabajan gana menos de $482. Entre ellos, 93,6% no tiene empleo formal (`sin_empleo_formal_entre_quienes_ganan_menos`).
 
-Para el Gráfico 4 junta M con N y R con S, como el Banco Central, y calcula por sector:
+Para los Gráficos 3 y 5 junta M con N y R con S, como el Banco Central, y calcula por sector:
 
 - `formales_hasta_el_basico`: el porcentaje de los trabajadores formales del sector que gana $506 o menos (altura de cada círculo). El promedio de todas las ramas es 36%.
 - `parte_de_quienes_ganan_alrededor`: qué parte de las personas que ganan de $458 a $506 trabaja en el sector (tamaño del círculo).
 - `cambio_vab_trabajador`: el cambio del script 11 (posición horizontal).
 
+Para el Gráfico 3 calcula, en los 13 sectores del Gráfico 2 (con electricidad y agua, secciones D y E), el porcentaje de quienes trabajan que gana menos de $482 y lo separa entre quienes tienen empleo formal (`secemp` = 1) y quienes no (`con_empleo_formal` y `sin_empleo_formal`). En agricultura y pesca: 5,3% con empleo formal y 78,4% sin él, 83,7% en total.
+
 Un sector sufre más presión (`mas_presion`) si su cambio es menor que el del SBU (25,3%) y su `formales_hasta_el_basico` supera el promedio. Son los círculos azules dentro de la zona sombreada.
 
 El script también calcula los afiliados del sector privado en la construcción (sección F del REESS), como promedio de los doce meses: 111.614 en 2017 y 87.668 en 2025, un cambio de −21,5%.
 
-Escribe `basico_por_rama_2026.csv`, `basico_por_sector_grupos_bce_2026.csv`, `afiliados_construccion_2017_2025.csv`, `grafico_4_presion_y_exposicion_por_sector.png` y `grafico_4_presion_y_exposicion_por_sector.svg`.
+Escribe `basico_por_rama_2026.csv`, `gana_menos_del_basico_por_sector_2026.csv`, `basico_por_sector_grupos_bce_2026.csv`, `afiliados_construccion_2017_2025.csv`, `grafico_5_presion_y_exposicion_por_sector.png` y `grafico_5_presion_y_exposicion_por_sector.svg`.
 
 ## Los gráficos
 
 Los gráficos siguen el formato de los del artículo de la ENIGHUR de El Quantificador. Miden 8 × 6,4 pulgadas, y cada uno se guarda en PNG a 300 puntos por pulgada y en SVG. La imagen no lleva título, fuente ni logo, porque el artículo los pone en el texto, arriba y abajo del gráfico. `scripts/00_common.R` es una copia de `theme_quantificador()` del archivo `scripts/utils.R` del repositorio `enighur-quantificador`, y define los dos colores de los gráficos. Los scripts 03, 04, 11 y 13 lo cargan con `source()`.
 
-En el Gráfico 4, el nombre de cada sector se coloca a mano, en la tabla `posicion_nombre` del script 13, para que ningún nombre tape un círculo. Si cambian los datos, revisa el PNG y mueve los nombres que se superpongan.
+En el Gráfico 5, el nombre de cada sector se coloca a mano, en la tabla `posicion_nombre` del script 13, para que ningún nombre tape un círculo. Si cambian los datos, revisa el PNG y mueve los nombres que se superpongan.
 
 ## Uso de inteligencia artificial
 

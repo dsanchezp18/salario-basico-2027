@@ -4,8 +4,8 @@
 # Purpose: En qué ramas se gana el salario básico, enero a mayo de 2026:
 #          porcentaje que gana menos de $482 y cuántas personas que ganan
 #          menos no tienen empleo formal, por rama; y, por sector, qué parte
-#          de los trabajadores formales gana hasta el básico. Dibuja el
-#          Gráfico 4 del artículo. También calcula cuánto cambió el número de
+#          de los trabajadores formales gana hasta el básico. Dibuja los
+#          Gráficos 3 y 5 del artículo. También calcula cuánto cambió el número de
 #          afiliados del sector privado en la construcción, 2017 a 2025.
 # Inputs:  data/raw/enemdu/enemdu_persona_2026_l_trimestre.sav (enero a marzo)
 #          data/raw/enemdu/enemdu_persona_2026_04.sav
@@ -14,10 +14,13 @@
 #          data/raw/sbu/sbu_ecuador_2007_2027.csv
 #          outputs/tables/vab_por_trabajador_sector.csv (de 11_...R)
 # Outputs: outputs/tables/basico_por_rama_2026.csv
+#          outputs/tables/gana_menos_del_basico_por_sector_2026.csv
 #          outputs/tables/basico_por_sector_grupos_bce_2026.csv
 #          outputs/tables/afiliados_construccion_2017_2025.csv
-#          outputs/figures/grafico_4_presion_y_exposicion_por_sector.png
-#          outputs/figures/grafico_4_presion_y_exposicion_por_sector.svg
+#          outputs/figures/grafico_3_gana_menos_del_basico_por_sector.png
+#          outputs/figures/grafico_3_gana_menos_del_basico_por_sector.svg
+#          outputs/figures/grafico_5_presion_y_exposicion_por_sector.png
+#          outputs/figures/grafico_5_presion_y_exposicion_por_sector.svg
 # ============================================================
 
 # 0. Setup ----
@@ -27,6 +30,7 @@ library(haven)
 library(purrr)
 library(readr)
 library(stringr)
+library(tidyr)
 
 source("scripts/00_common.R") # tema y colores; carga ggplot2
 
@@ -156,6 +160,25 @@ basico_por_sector <- ocupados |>
     .by = sector
   )
 
+# Por sector (los 13 del Gráfico 2): porcentaje de quienes trabajan que gana
+# menos de $482, separado entre quienes tienen y no tienen empleo formal.
+grupos_13 <- bind_rows(
+  grupos,
+  tibble(seccion = c("D", "E"), sector = "Electricidad y agua")
+)
+
+gana_menos_por_sector <- ocupados |>
+  inner_join(grupos_13, by = join_by(seccion), relationship = "many-to-one") |>
+  summarise(
+    con_empleo_formal = 100 * sum(peso[ingrl < sbu_2026 & secemp == 1], na.rm = TRUE) /
+      sum(peso, na.rm = TRUE),
+    sin_empleo_formal = 100 * sum(peso[ingrl < sbu_2026 & secemp != 1], na.rm = TRUE) /
+      sum(peso, na.rm = TRUE),
+    .by = sector
+  ) |>
+  mutate(gana_menos_de_482 = con_empleo_formal + sin_empleo_formal) |>
+  arrange(desc(gana_menos_de_482))
+
 # Promedio de todas las ramas.
 formales <- filter(ocupados, secemp == 1)
 
@@ -192,6 +215,10 @@ afiliados_construccion <- reess |>
 # 4. Write outputs ----
 
 write_csv(basico_por_rama, "outputs/tables/basico_por_rama_2026.csv")
+write_csv(
+  gana_menos_por_sector,
+  "outputs/tables/gana_menos_del_basico_por_sector_2026.csv"
+)
 write_csv(grafico_4, "outputs/tables/basico_por_sector_grupos_bce_2026.csv")
 write_csv(
   afiliados_construccion,
@@ -307,7 +334,7 @@ p_grafico_4 <- ggplot(
 # Mismo formato que los gráficos del artículo de la ENIGHUR: 8 x 6,4 pulgadas,
 # PNG a 300 ppp y SVG. El título y la fuente van en el texto del artículo.
 ggsave(
-  "outputs/figures/grafico_4_presion_y_exposicion_por_sector.png",
+  "outputs/figures/grafico_5_presion_y_exposicion_por_sector.png",
   plot = p_grafico_4,
   width = 8,
   height = 6.4,
@@ -318,8 +345,73 @@ ggsave(
 )
 
 ggsave(
-  "outputs/figures/grafico_4_presion_y_exposicion_por_sector.svg",
+  "outputs/figures/grafico_5_presion_y_exposicion_por_sector.svg",
   plot = p_grafico_4,
+  width = 8,
+  height = 6.4,
+  units = "in",
+  device = grDevices::svg,
+  bg = "white"
+)
+
+# Gráfico 3: de arriba hacia abajo, de más a menos personas que ganan menos de
+# $482. En azul, la parte sin empleo formal.
+grafico_3 <- gana_menos_por_sector |>
+  mutate(sector = factor(sector, levels = rev(sector))) |>
+  pivot_longer(
+    c(sin_empleo_formal, con_empleo_formal),
+    names_to = "empleo",
+    values_to = "porcentaje"
+  ) |>
+  mutate(
+    empleo = factor(
+      empleo,
+      levels = c("con_empleo_formal", "sin_empleo_formal"),
+      labels = c("Con empleo formal", "Sin empleo formal")
+    )
+  )
+
+p_grafico_3 <- ggplot(grafico_3, aes(x = porcentaje, y = sector, fill = empleo)) +
+  geom_col(width = 0.65) +
+  geom_text(
+    data = mutate(gana_menos_por_sector, sector = factor(sector, levels = rev(sector))),
+    aes(x = gana_menos_de_482 + 1.5, y = sector, label = paste0(round(gana_menos_de_482), "%")),
+    inherit.aes = FALSE,
+    hjust = 0,
+    size = 4,
+    fontface = "bold"
+  ) +
+  scale_fill_manual(values = c("Con empleo formal" = gris, "Sin empleo formal" = azul)) +
+  scale_x_continuous(
+    breaks = c(0, 25, 50, 75),
+    labels = \(x) paste0(x, "%"),
+    limits = c(0, 95)
+  ) +
+  scale_y_discrete(labels = \(x) str_wrap(x, 22)) +
+  labs(x = "Personas que trabajan y ganan menos de $482", y = NULL) +
+  theme_quantificador() +
+  theme(
+    axis.line.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 12, colour = "grey20")
+  )
+
+ggsave(
+  "outputs/figures/grafico_3_gana_menos_del_basico_por_sector.png",
+  plot = p_grafico_3,
+  width = 8,
+  height = 6.4,
+  units = "in",
+  dpi = 300,
+  device = ragg::agg_png,
+  bg = "white"
+)
+
+ggsave(
+  "outputs/figures/grafico_3_gana_menos_del_basico_por_sector.svg",
+  plot = p_grafico_3,
   width = 8,
   height = 6.4,
   units = "in",

@@ -3,14 +3,14 @@
 # Author: Daniel Sanchez
 # Purpose: Salario básico unificado (SBU) frente al precio de tres tipos de
 #          capital: maquinaria industrial, computadoras y software, 2007 a
-#          2026, en índice con 2007 = 100. Dibuja el Gráfico 3 del artículo.
+#          2026, en índice con 2007 = 100. Dibuja el Gráfico 4 del artículo.
 # Inputs:  data/raw/fred/WPU11.csv
 #          data/raw/fred/PCU334111334111.csv
 #          data/raw/fred/PCU511210511210.csv
 #          data/raw/sbu/sbu_ecuador_2007_2027.csv
 # Outputs: outputs/tables/precio_capital_vs_sbu.csv
-#          outputs/figures/grafico_3_sbu_precio_capital.png
-#          outputs/figures/grafico_3_sbu_precio_capital.svg
+#          outputs/figures/grafico_4_sbu_precio_capital.png
+#          outputs/figures/grafico_4_sbu_precio_capital.svg
 # ============================================================
 
 # 0. Setup ----
@@ -128,7 +128,7 @@ p_grafico_3 <- ggplot(
 # Mismo formato que los gráficos del artículo de la ENIGHUR: 8 x 6,4 pulgadas,
 # PNG a 300 ppp y SVG. El título y la fuente van en el texto del artículo.
 ggsave(
-  "outputs/figures/grafico_3_sbu_precio_capital.png",
+  "outputs/figures/grafico_4_sbu_precio_capital.png",
   plot = p_grafico_3,
   width = 8,
   height = 6.4,
@@ -139,7 +139,7 @@ ggsave(
 )
 
 ggsave(
-  "outputs/figures/grafico_3_sbu_precio_capital.svg",
+  "outputs/figures/grafico_4_sbu_precio_capital.svg",
   plot = p_grafico_3,
   width = 8,
   height = 6.4,
