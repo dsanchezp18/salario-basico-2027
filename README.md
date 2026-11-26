@@ -9,7 +9,7 @@ El salario básico unificado (SBU) sube de $482 a $500 en 2027. Si contratar con
 Para responder, el código hace cuatro comparaciones:
 
 1. Cuánto cuesta en total un trabajador con salario básico para el empleador (script 01).
-2. Cuánto creció el SBU frente a lo que venden las empresas y frente a lo que produce cada trabajador (scripts 02, 03 y 11).
+2. Cuánto creció el SBU frente a lo que produce cada trabajador (scripts 03 y 11).
 3. Cuánto cambió el precio de la maquinaria, las computadoras y el software frente al SBU (scripts 04 y 05).
 4. Quiénes ganan alrededor del básico y en qué sectores trabajan (scripts 06, 12 y 13).
 
@@ -27,7 +27,6 @@ Corre los scripts desde la raíz del proyecto, en este orden:
 
 ```
 Rscript scripts/01_costo_laboral.R
-Rscript scripts/02_ventas_sri.R
 Rscript scripts/03_productividad.R
 Rscript scripts/04_precio_capital.R
 Rscript scripts/05_maquinaria_nacional.R
@@ -37,7 +36,7 @@ Rscript scripts/12_quien_gana_basico.R
 Rscript scripts/13_basico_por_rama.R
 ```
 
-El orden importa en dos casos. El script 03 lee una tabla que escribe el 02, y el 13 lee una tabla que escribe el 11. La numeración salta del 06 al 11 y no falta ningún script.
+El orden importa en un caso. El script 13 lee una tabla que escribe el 11. La numeración salta del 01 al 03 y del 06 al 11, y no falta ningún script.
 
 Carpetas:
 
@@ -53,7 +52,6 @@ outputs/figures/   los cuatro gráficos, en PNG y SVG
 | Archivo | Fuente | Qué contiene |
 | --- | --- | --- |
 | `sbu/sbu_ecuador_2007_2027.csv` | Acuerdos ministeriales del Ministerio del Trabajo; 2027 según el Decreto Ejecutivo 538 | SBU mensual de cada año, en dólares |
-| `sri/ventas_enero_julio_2017_2025.csv` | Ministerio de Economía y Finanzas con datos del SRI, publicado por [El Universo](https://www.eluniverso.com/noticias/economia/ecuador-ventas-totales-crecimiento-anual-ministerio-economia-nota/) | Ventas totales declaradas de enero a julio, en millones de dólares |
 | `bce/iem_432_vab_industria_2007_2025.csv` | Banco Central del Ecuador, Información Estadística Mensual 2096, cuadro 4.3.2 ([IEM-432-e.xlsx](https://contenido.bce.fin.ec/documentos/PublicacionesNotas/Catalogo/IEMensual/m2096/IEM-432-e.xlsx)) | Valor agregado bruto (VAB) por industria, 2007 a 2025, en millones de dólares corrientes y de 2018 |
 | `bce/iem_432_vab_corriente_2017_2025_todas.csv` | La misma tabla del Banco Central | VAB corriente de cada industria en 2017 y 2025 |
 | `ilo/ilostat_empleo_rama_ecuador.csv` | OIT, ILOSTAT, `EMP_TEMP_NB`, con datos de la ENEMDU | Ocupados por rama, en miles. Hasta 2012 usa la CIIU Rev. 3 y desde 2013 la Rev. 4 |
@@ -81,18 +79,6 @@ El décimo cuarto es un SBU entero al año para todos, así que su doceavo coinc
 
 Escribe `costo_laboral_sbu.csv`, con una fila por rubro: `por_dolar` (cuánto cuesta cada dólar de salario), `monto_2026`, `monto_2027` y `cambio_mensual`. La última fila es el costo total.
 
-### 02_ventas_sri.R: ventas frente al SBU
-
-Para comparar series con unidades distintas, cada una se divide para su valor de 2017:
-
-```
-índice del año t = 100 × valor en t / valor en 2017
-```
-
-Un índice de 148 significa que el valor es 48% mayor que en 2017. Con las ventas de enero a julio: 100 × 144.711 / 97.617 = 148,2. Con el SBU: 100 × 470 / 375 = 125,3.
-
-Lee las ventas y el SBU. Escribe `ventas_sri_vs_sbu.csv` con los valores y los dos índices.
-
 ### 03_productividad.R: Gráfico 1
 
 Mide cuánto produce en promedio cada persona que trabaja, sin el petróleo:
@@ -109,11 +95,17 @@ Se quita el petróleo porque produce mucho con muy pocos trabajadores y movería
 
 El promedio incluye a trabajadores formales e informales. No mide lo que produce quien gana el básico.
 
-Lee el VAB, los ocupados y la tabla del script 02. Escribe:
+Lee el VAB, los ocupados y el SBU. Para comparar series con unidades distintas, cada una se divide para su valor de 2017:
+
+```
+índice del año t = 100 × valor en t / valor en 2017
+```
+
+Un índice de 114 significa que el valor es 14% mayor que en 2017. Con el SBU: 100 × 470 / 375 = 125,3. Escribe:
 
 - `productividad_no_petrolera_2007_2025.csv`: VAB sin petróleo, ocupados, VAB por trabajador y los dos pesos.
-- `indice_ventas_vab_sbu_2017_2025.csv`: los cuatro índices del Gráfico 1, con 2017 = 100.
-- `grafico_1_ventas_vab_sbu.png` y `grafico_1_ventas_vab_sbu.svg`.
+- `indice_vab_sbu_2017_2025.csv`: los tres índices del Gráfico 1, con 2017 = 100.
+- `grafico_1_vab_sbu.png` y `grafico_1_vab_sbu.svg`.
 
 ### 04_precio_capital.R: Gráfico 3
 

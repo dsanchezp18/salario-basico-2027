@@ -2,17 +2,17 @@
 # 03_productividad.R
 # Author: Daniel Sanchez
 # Purpose: Valor agregado fuera del petróleo y valor agregado por trabajador,
-#          2007 a 2025. Dibuja el Gráfico 1 del artículo: ventas, valor
-#          agregado, valor agregado por trabajador y salario básico unificado
-#          (SBU), 2017 a 2025, en índice con 2017 = 100. También calcula el
+#          2007 a 2025. Dibuja el Gráfico 1 del artículo: valor agregado,
+#          valor agregado por trabajador y salario básico unificado (SBU),
+#          2017 a 2025, en índice con 2017 = 100. También calcula el
 #          peso del petróleo y la minería (nota 4 del artículo).
 # Inputs:  data/raw/bce/iem_432_vab_industria_2007_2025.csv
 #          data/raw/ilo/ilostat_empleo_rama_ecuador.csv
-#          outputs/tables/ventas_sri_vs_sbu.csv (de 02_ventas_sri.R)
+#          data/raw/sbu/sbu_ecuador_2007_2027.csv
 # Outputs: outputs/tables/productividad_no_petrolera_2007_2025.csv
-#          outputs/tables/indice_ventas_vab_sbu_2017_2025.csv
-#          outputs/figures/grafico_1_ventas_vab_sbu.png
-#          outputs/figures/grafico_1_ventas_vab_sbu.svg
+#          outputs/tables/indice_vab_sbu_2017_2025.csv
+#          outputs/figures/grafico_1_vab_sbu.png
+#          outputs/figures/grafico_1_vab_sbu.svg
 # ============================================================
 
 # 0. Setup ----
@@ -46,8 +46,8 @@ ocupados <- read_csv(
     names_prefix = "ocupados_"
   )
 
-ventas_sbu <- read_csv(
-  "outputs/tables/ventas_sri_vs_sbu.csv",
+sbu <- read_csv(
+  "data/raw/sbu/sbu_ecuador_2007_2027.csv",
   show_col_types = FALSE
 )
 
@@ -81,7 +81,8 @@ no_petrolero <- no_petrolero |>
   )
 
 # Dividimos cada año para su valor de 2017: un índice de 114 significa que el
-# valor es 14% mayor que en 2017.
+# valor es 14% mayor que en 2017. La serie del SBU empieza en 2007 y llega a
+# 2027: se usan solo los años de 2017 a 2025.
 indices <- no_petrolero |>
   filter(anio >= 2017) |>
   mutate(
@@ -91,7 +92,11 @@ indices <- no_petrolero |>
   ) |>
   select(anio, indice_vab, indice_vab_trabajador) |>
   left_join(
-    select(ventas_sbu, anio, indice_ventas, indice_sbu),
+    transmute(
+      filter(sbu, anio %in% 2017:2025),
+      anio,
+      indice_sbu = 100 * sbu / sbu[anio == 2017]
+    ),
     by = join_by(anio),
     relationship = "one-to-one",
     unmatched = "error"
@@ -104,10 +109,9 @@ write_csv(
   no_petrolero,
   "outputs/tables/productividad_no_petrolera_2007_2025.csv"
 )
-write_csv(indices, "outputs/tables/indice_ventas_vab_sbu_2017_2025.csv")
+write_csv(indices, "outputs/tables/indice_vab_sbu_2017_2025.csv")
 
 nombres_serie <- c(
-  indice_ventas = "Ventas (enero a julio)",
   indice_sbu = "Salario básico",
   indice_vab = "Valor agregado",
   indice_vab_trabajador = "Valor agregado por trabajador"
@@ -117,28 +121,17 @@ grafico_1 <- indices |>
   pivot_longer(-anio, names_to = "serie", values_to = "indice") |>
   mutate(serie = unname(nombres_serie[serie]))
 
-# Cada serie se nombra al final de su línea, con su valor de 2025. El salario
-# básico y el valor agregado terminan a solo 3 puntos de distancia, así que
-# sus nombres se separan un poco hacia arriba y hacia abajo.
-ajuste_etiqueta <- c(
-  "Salario básico" = 2,
-  "Valor agregado" = -2,
-  "Valor agregado por trabajador" = 0,
-  "Ventas (enero a julio)" = 0
-)
-
+# Cada serie se nombra al final de su línea, con su valor de 2025.
 etiquetas <- grafico_1 |>
   filter(anio == 2025) |>
   mutate(
-    y_etiqueta = indice + ajuste_etiqueta[serie],
     etiqueta = str_wrap(paste0(serie, ": ", round(indice)), 20)
   )
 
 colores_serie <- c(
   "Valor agregado por trabajador" = azul,
   "Salario básico" = "grey20",
-  "Valor agregado" = gris,
-  "Ventas (enero a julio)" = gris
+  "Valor agregado" = gris
 )
 
 p_grafico_1 <- ggplot(
@@ -158,7 +151,7 @@ p_grafico_1 <- ggplot(
   geom_point(size = 2) +
   geom_text(
     data = etiquetas,
-    aes(x = anio + 0.3, y = y_etiqueta, label = etiqueta),
+    aes(x = anio + 0.3, y = indice, label = etiqueta),
     hjust = 0,
     size = 4,
     lineheight = 0.95
@@ -168,20 +161,18 @@ p_grafico_1 <- ggplot(
     values = c(
       "Valor agregado por trabajador" = "solid",
       "Salario básico" = "solid",
-      "Valor agregado" = "solid",
-      "Ventas (enero a julio)" = "22"
+      "Valor agregado" = "solid"
     )
   ) +
   scale_linewidth_manual(
     values = c(
       "Valor agregado por trabajador" = 1.3,
       "Salario básico" = 0.8,
-      "Valor agregado" = 0.8,
-      "Ventas (enero a julio)" = 0.8
+      "Valor agregado" = 0.8
     )
   ) +
   scale_x_continuous(breaks = 2017:2025, limits = c(2017, 2028.6)) +
-  scale_y_continuous(breaks = seq(80, 160, 20), limits = c(80, 155)) +
+  scale_y_continuous(breaks = seq(90, 130, 10), limits = c(90, 130)) +
   coord_cartesian(clip = "off") +
   labs(x = NULL, y = "Índice (2017 = 100)") +
   theme_quantificador()
@@ -189,7 +180,7 @@ p_grafico_1 <- ggplot(
 # Mismo formato que los gráficos del artículo de la ENIGHUR: 8 x 6,4 pulgadas,
 # PNG a 300 ppp y SVG. El título y la fuente van en el texto del artículo.
 ggsave(
-  "outputs/figures/grafico_1_ventas_vab_sbu.png",
+  "outputs/figures/grafico_1_vab_sbu.png",
   plot = p_grafico_1,
   width = 8,
   height = 6.4,
@@ -200,7 +191,7 @@ ggsave(
 )
 
 ggsave(
-  "outputs/figures/grafico_1_ventas_vab_sbu.svg",
+  "outputs/figures/grafico_1_vab_sbu.svg",
   plot = p_grafico_1,
   width = 8,
   height = 6.4,
