@@ -5,8 +5,8 @@
 #          porcentaje que gana menos de $482 y cuántas personas que ganan
 #          menos no tienen empleo formal, por rama; y, por sector, qué parte
 #          de los trabajadores formales gana hasta el básico. Dibuja los
-#          Gráficos 3 y 5 del artículo. También calcula cuánto cambió el número de
-#          afiliados del sector privado en la construcción, 2017 a 2025.
+#          Gráficos 3 y 5 del artículo. También calcula cuánto cambió el
+#          número de afiliados del sector privado en la construcción, 2017 a 2025.
 # Inputs:  data/raw/enemdu/enemdu_persona_2026_l_trimestre.sav (enero a marzo)
 #          data/raw/enemdu/enemdu_persona_2026_04.sav
 #          data/raw/enemdu/enemdu_persona_2026_05.sav
@@ -170,9 +170,11 @@ grupos_13 <- bind_rows(
 gana_menos_por_sector <- ocupados |>
   inner_join(grupos_13, by = join_by(seccion), relationship = "many-to-one") |>
   summarise(
-    con_empleo_formal = 100 * sum(peso[ingrl < sbu_2026 & secemp == 1], na.rm = TRUE) /
+    con_empleo_formal = 100 *
+      sum(peso[ingrl < sbu_2026 & secemp == 1], na.rm = TRUE) /
       sum(peso, na.rm = TRUE),
-    sin_empleo_formal = 100 * sum(peso[ingrl < sbu_2026 & secemp != 1], na.rm = TRUE) /
+    sin_empleo_formal = 100 *
+      sum(peso[ingrl < sbu_2026 & secemp != 1], na.rm = TRUE) /
       sum(peso, na.rm = TRUE),
     .by = sector
   ) |>
@@ -371,17 +373,29 @@ grafico_3 <- gana_menos_por_sector |>
     )
   )
 
-p_grafico_3 <- ggplot(grafico_3, aes(x = porcentaje, y = sector, fill = empleo)) +
+totales_3 <- gana_menos_por_sector |>
+  mutate(sector = factor(sector, levels = rev(sector)))
+
+p_grafico_3 <- ggplot(
+  grafico_3,
+  aes(x = porcentaje, y = sector, fill = empleo)
+) +
   geom_col(width = 0.65) +
   geom_text(
-    data = mutate(gana_menos_por_sector, sector = factor(sector, levels = rev(sector))),
-    aes(x = gana_menos_de_482 + 1.5, y = sector, label = paste0(round(gana_menos_de_482), "%")),
+    data = totales_3,
+    aes(
+      x = gana_menos_de_482 + 1.5,
+      y = sector,
+      label = paste0(round(gana_menos_de_482), "%")
+    ),
     inherit.aes = FALSE,
     hjust = 0,
     size = 4,
     fontface = "bold"
   ) +
-  scale_fill_manual(values = c("Con empleo formal" = gris, "Sin empleo formal" = azul)) +
+  scale_fill_manual(
+    values = c("Con empleo formal" = gris, "Sin empleo formal" = azul)
+  ) +
   scale_x_continuous(
     breaks = c(0, 25, 50, 75),
     labels = \(x) paste0(x, "%"),
