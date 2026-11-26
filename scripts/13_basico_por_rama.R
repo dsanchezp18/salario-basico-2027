@@ -6,7 +6,8 @@
 #          menos no tienen empleo formal, por rama; y, por sector, qué parte
 #          de los trabajadores formales gana hasta el básico. Dibuja los
 #          Gráficos 3 y 5 del artículo. También calcula cuánto cambió el
-#          número de afiliados del sector privado en la construcción, 2017 a 2025.
+#          número de afiliados del sector privado en la construcción, 2017 a
+#          2025.
 # Inputs:  data/raw/enemdu/enemdu_persona_2026_l_trimestre.sav (enero a marzo)
 #          data/raw/enemdu/enemdu_persona_2026_04.sav
 #          data/raw/enemdu/enemdu_persona_2026_05.sav
